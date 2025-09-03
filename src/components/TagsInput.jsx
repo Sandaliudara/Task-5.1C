@@ -1,19 +1,18 @@
-import { TextField, Chip, Box } from "@mui/material";
-import { useState } from "react";
+import { TextField, Chip, Box, FormHelperText } from "@mui/material";
+import { useState, useRef, useEffect } from "react";
 
-export default function TagsInput({
-  value = [],
-  onChange,
-  helperText = "Add up to 3 tags",
-  errorText = "",
-}) {
+export default function TagsInput({ value = [], onChange, helperText = "Add up to 3 tags", errorText = "" }) {
   const [input, setInput] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    // keep focus in the input after adding a tag
+    inputRef.current?.focus();
+  }, [value.length]);
 
   const addTag = (t) => {
     const tag = t.trim();
-    if (!tag) return;
-    if (value.includes(tag)) return;
-    if (value.length >= 3) return;
+    if (!tag || value.includes(tag) || value.length >= 3) return;
     onChange([...value, tag]);
     setInput("");
   };
@@ -28,6 +27,7 @@ export default function TagsInput({
   return (
     <Box>
       <TextField
+        inputRef={inputRef}
         label="Tags"
         placeholder="e.g., Java"
         value={input}
@@ -35,12 +35,21 @@ export default function TagsInput({
         onKeyDown={handleKeyDown}
         fullWidth
         error={Boolean(errorText)}
-        helperText={errorText || `${helperText} • Press Enter to add`}
+        inputProps={{ "aria-describedby": "tags-help" }}
         sx={{ mb: 1 }}
       />
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <FormHelperText id="tags-help" error={Boolean(errorText)} aria-live="polite">
+        {errorText || `${helperText} • Press Enter to add`}
+      </FormHelperText>
+
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
         {value.map((tag) => (
-          <Chip key={tag} label={tag} onDelete={() => onChange(value.filter((t) => t !== tag))} />
+          <Chip
+            key={tag}
+            label={tag}
+            onDelete={() => onChange(value.filter((t) => t !== tag))}
+            // Chip is keyboard deletable (Backspace/Delete) by default
+          />
         ))}
       </Box>
     </Box>
